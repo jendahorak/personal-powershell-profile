@@ -8,6 +8,33 @@ Set-Alias ll ls
 Set-Alias grep findstr
 Set-Alias cl clear
 
+function lf {
+    <#.SYNOPSIS
+    Lists all function names defined in the PowerShell profile file.
+    #>
+
+    $profilePath = $PROFILE
+    $profileContent = Get-Content -Path $profilePath -ErrorAction SilentlyContinue
+
+    if ($profileContent -eq $null) {
+        Write-Host "No PowerShell profile file found."
+        return
+    }
+
+    $functionNames = $profileContent | Where-Object { $_ -match "function ([a-zA-Z0-9_-]+)\s*\{" } | ForEach-Object {
+        $matches[1]
+    }
+
+    if ($functionNames.Count -eq 0) {
+        Write-Host "No functions found in the PowerShell profile."
+    } else {
+        Write-Host
+        $functionNames | ForEach-Object {
+            Write-Host "- $_"
+        }
+    }
+}
+
 
 function gst { 
     <#.SYNOPSIS
@@ -35,6 +62,8 @@ function gpsh {
 #>
     git push 
 }
+
+
 
 
 
@@ -229,12 +258,15 @@ function initProject {
 
 
 function rmAll {
+        <#.SYNOPSIS
+        Removes all files in Folder
+        #>
     Remove-Item -Path .\* -Recurse -Confirm
 }
 function Rename-Photos {
     <#.SYNOPSIS
     Renames photos in a folder based on their creation date.
-#>
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $false)]
@@ -363,42 +395,11 @@ function Get-Encoding {
     }
 }
 
-Function Find-GitRepository {
+function Find-GitRepository {
 
     <#
     .SYNOPSIS
     Find Git repositories
-    .DESCRIPTION
-    Use this command to find Git repositories in the specified folder. It is assumed that you have the Git command line tools already installed.
-    .PARAMETER Path
-    The top level path to search.
-    .EXAMPLE
-    PS C:\> Find-GitRepository -path D:\Projects
-    Repository             Branch LastAuthor     LastLog             
-    ----------             ------ ----------     -------             
-    D:\Projects\Excalibur  master jdhitsolutions 4/17/2016 9:59:02 AM
-    D:\Projects\PiedPiper  bug    jdhitsolutions 5/16/2016 1:15:03 PM
-    D:\Projects\PSMagic    master jdhitsolutions 5/11/2016 1:27:35 PM
-    D:\Projects\ProjectX   dev    jdhitsolutions 4/12/2016 4:49:30 PM
-    .NOTES
-    NAME        :  Find-GitRepository
-    VERSION     :  1.0.0   
-    LAST UPDATED:  5/17/2016
-    AUTHOR      :  Jeff Hicks (@JeffHicks)
-    Learn more about PowerShell:
-    http://jdhitsolutions.com/blog/essential-powershell-resources/
-    ****************************************************************
-    * DO NOT USE IN A PRODUCTION ENVIRONMENT UNTIL YOU HAVE TESTED *
-    * THOROUGHLY IN A LAB ENVIRONMENT. USE AT YOUR OWN RISK.  IF   *
-    * YOU DO NOT UNDERSTAND WHAT THIS SCRIPT DOES OR HOW IT WORKS, *
-    * DO NOT USE IT OUTSIDE OF A SECURE, TEST SETTING.             *
-    ****************************************************************
-    .LINK
-    https://gist.github.com/jdhitsolutions/ba3295167ccc997b7714e1f2a2777405
-    .INPUTS
-    [string]
-    .OUTPUTS
-    [pscustomobject]
     #>
 
     [cmdletbinding()]
@@ -444,26 +445,3 @@ Function Find-GitRepository {
     Write-Verbose "[END    ] Ending: $($MyInvocation.Mycommand)"
 
 } #end function
-
-
-function lf {
-    <#.SYNOPSIS
-    Lists custom functions from your PowerShell profile with their synopses.
-    #>
-
-    $profilePath = $PROFILE
-    $profileContent = Get-Content $profilePath -Raw
-    $functionRegex = "function\s+([^\s{]+)\s*\{.*?#\.SYNOPSIS(.*?)#}"
-
-    $matchesF = [Regex]::Matches($profileContent, $functionRegex, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-
-    if ($matchesF.Count -eq 0) {
-        Write-Host "No custom functions found in your PowerShell profile."
-    } else {
-        foreach ($match in $matchesF) {
-            $functionName = $match.Groups[1].Value.Trim()
-            $synopsis = $match.Groups[2].Value.Trim()
-            Write-Host "$functionName - $synopsis"
-        }
-    }
-}
